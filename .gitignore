@@ -366,3 +366,8 @@ FodyWeavers.xsd
 .aider*
 TODO.md
 install.bat
+config/sldl.conf
+.DS_Store
+config/toolcrate.code-workspace
+config/crontabs/abc
+config/crontabs/root
