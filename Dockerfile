@@ -32,7 +32,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN \
   echo "**** install runtime packages ****" && \
   apk --no-cache add \
-    dotnet6-runtime && \
+    dotnet6-runtime \
+    python3 \
+    py3-pip \
+    ffmpeg \
+    yt-dlp && \
   echo "**** cleanup ****" && \
   rm -rf \
     /root/.cache \
