@@ -28,7 +28,30 @@ See the [usage examples](#examples-2).
  - [Notes](#notes-1)
  - [Tips](#tips)
  - [Docker](#docker)
+ - [Homebrew (custom tap)](#homebrew-custom-tap)
 
+
+## Homebrew (custom tap)
+
+If you prefer non-Docker installs, use a custom Homebrew tap.
+
+```bash
+# one-time
+brew tap discolotus/tools
+
+# install
+brew install sldl
+```
+
+If your local macOS policy blocks unsigned binaries, run:
+
+```bash
+# only needed on stricter systems
+xattr -dr com.apple.quarantine "$(which sldl)" 2>/dev/null || true
+codesign -s - --force "$(which sldl)"
+```
+
+A starter formula template is included in this repo at `packaging/homebrew/sldl.rb`.
 
 ## Options
 
