@@ -69,13 +69,17 @@ jobs:
             -o dist/osx-x64
           chmod +x dist/osx-x64/${APP_NAME}
 
-      - name: Import Apple Developer ID certificate
-        if: ${{ secrets.APPLE_CERT_P12_BASE64 != '' && secrets.APPLE_CERT_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
+      - name: Import Apple Developer ID certificate (optional)
         env:
           APPLE_CERT_P12_BASE64: ${{ secrets.APPLE_CERT_P12_BASE64 }}
           APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
         shell: bash
         run: |
+          if [[ -z "$APPLE_CERT_P12_BASE64" || -z "$APPLE_CERT_PASSWORD" ]]; then
+            echo "Signing cert secrets not set; skipping certificate import."
+            exit 0
+          fi
+
           KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
           CERT_PATH="$RUNNER_TEMP/dev_id.p12"
 
@@ -89,11 +93,14 @@ jobs:
           security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$APPLE_CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
           security set-key-partition-list -S apple-tool:,apple: -s -k "" "$KEYCHAIN_PATH"
 
-      - name: Sign binaries (Developer ID)
-        if: ${{ secrets.APPLE_DEVELOPER_ID != '' }}
+      - name: Sign binaries (Developer ID, optional)
         env:
           APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
         run: |
+          if [[ -z "$APPLE_DEVELOPER_ID" ]]; then
+            echo "APPLE_DEVELOPER_ID not set; skipping codesign."
+            exit 0
+          fi
           codesign --force --options runtime --timestamp --sign "$APPLE_DEVELOPER_ID" dist/osx-arm64/${APP_NAME}
           codesign --force --options runtime --timestamp --sign "$APPLE_DEVELOPER_ID" dist/osx-x64/${APP_NAME}
           codesign --verify --verbose=2 dist/osx-arm64/${APP_NAME}
@@ -116,13 +123,17 @@ jobs:
 
           echo "Executable-bit check passed for both macOS artifacts."
 
-      - name: Notarize zip artifacts
-        if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
+      - name: Notarize zip artifacts (optional)
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          if [[ -z "$APPLE_ID" || -z "$APPLE_APP_SPECIFIC_PASSWORD" || -z "$APPLE_TEAM_ID" ]]; then
+            echo "Notarization secrets not set; skipping notarization."
+            exit 0
+          fi
+
           xcrun notarytool submit dist/sldl_osx-arm64.zip \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
@@ -135,9 +146,16 @@ jobs:
             --password "$APPLE_APP_SPECIFIC_PASSWORD" \
             --wait
 
-      - name: Staple notarization ticket (when available)
-        if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
+      - name: Staple notarization ticket (optional)
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          if [[ -z "$APPLE_ID" || -z "$APPLE_APP_SPECIFIC_PASSWORD" || -z "$APPLE_TEAM_ID" ]]; then
+            echo "Notarization secrets not set; skipping stapling."
+            exit 0
+          fi
           xcrun stapler staple dist/osx-arm64/${APP_NAME} || true
           xcrun stapler staple dist/osx-x64/${APP_NAME} || true
 
