@@ -712,3 +712,27 @@ Example => Run `sldl` every Sunday at 1am, search for missing tracks from the sp
 ```
 
 [crontab.guru](https://crontab.guru/) could be used to help with the scheduling expression.
+
+## Maintainers: macOS signed/notarized release pipeline
+
+This repo includes a workflow scaffold at:
+
+- `.github/workflows/macos-sign-notarize.yml`
+
+It builds `sldl` for `osx-arm64` and `osx-x64`, preserves executable bit in zip artifacts, and supports Apple Developer ID signing + notarization when secrets are configured.
+
+### Required GitHub secrets
+
+- `APPLE_CERT_P12_BASE64` - base64 encoded Developer ID Application certificate (`.p12`)
+- `APPLE_CERT_PASSWORD` - password for the `.p12`
+- `APPLE_DEVELOPER_ID` - certificate subject, e.g. `Developer ID Application: Company, Inc. (TEAMID)`
+- `APPLE_ID` - Apple account used for notarization
+- `APPLE_TEAM_ID` - Apple developer team ID
+- `APPLE_APP_SPECIFIC_PASSWORD` - app-specific password for notarization
+
+### Triggering
+
+- Automatically on `release: published`
+- Manually via `workflow_dispatch`
+
+Without signing secrets, the workflow still builds artifacts for testing but skips signing/notarization steps.
