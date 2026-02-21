@@ -104,6 +104,18 @@ jobs:
           cd dist/osx-arm64 && /usr/bin/zip -r ../sldl_osx-arm64.zip ${APP_NAME}
           cd ../osx-x64 && /usr/bin/zip -r ../sldl_osx-x64.zip ${APP_NAME}
 
+      - name: Verify executable bit survives packaging
+        shell: bash
+        run: |
+          mkdir -p dist/verify/arm64 dist/verify/x64
+          unzip -q dist/sldl_osx-arm64.zip -d dist/verify/arm64
+          unzip -q dist/sldl_osx-x64.zip -d dist/verify/x64
+
+          test -x dist/verify/arm64/${APP_NAME} || { echo "ERROR: arm64 artifact lost executable bit"; ls -l dist/verify/arm64/${APP_NAME}; exit 1; }
+          test -x dist/verify/x64/${APP_NAME} || { echo "ERROR: x64 artifact lost executable bit"; ls -l dist/verify/x64/${APP_NAME}; exit 1; }
+
+          echo "Executable-bit check passed for both macOS artifacts."
+
       - name: Notarize zip artifacts
         if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
         env:
